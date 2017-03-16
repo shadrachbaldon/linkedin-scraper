@@ -1,6 +1,8 @@
 import sys
 import csv
 import os, errno
+import time
+import random
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -92,22 +94,26 @@ class ScrapeLinkedin():
         self.csv_path = path
         self.csv_path = self.csv_path.replace('/','\\\\')
         print(self.csv_path)
-        # self.browser = webdriver.Chrome()
-        # self.browser.maximize_window()
-        #self.login()
+        self.browser = webdriver.Chrome()
+        self.browser.maximize_window()
         self.failCounter = 0
 
     def scroll(self):
         self.browser.execute_script("window.scrollTo(0,700);")
         print("scrolled..")
+
+    def delay(self):
+        seconds = random.randrange(5,24)
+        print("delaying execution for " +str(seconds) + " seconds")
+        time.sleep(seconds)
     
     def searchCompany(self,name):
         #search company function
         #parameters: name of the company
         #return value: company url
 
-        self.browser = webdriver.Chrome()
-        self.browser.maximize_window()
+        # self.browser = webdriver.Chrome()
+        # self.browser.maximize_window()
 
         print("searching for company..")
         self.searchString = "site:linkedin.com/company "+ name
@@ -121,15 +127,18 @@ class ScrapeLinkedin():
 
         try:
             self.element = WebDriverWait(self.browser, 30).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'cite._Rm'))
+                # EC.presence_of_element_located((By.CSS_SELECTOR, 'cite._Rm'))
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'h3.r > a'))
             )
-            self.result = self.browser.find_element_by_css_selector('cite._Rm')
+            # self.result = self.browser.find_element_by_css_selector('cite._Rm')
+            self.result = self.browser.find_element_by_css_selector('h3.r > a')
+            self.result = self.result.get_attribute("href")
             print("search done!")
-            print(self.result.text)
+            print(self.result)
 
-            return self.result.text
+            return self.result
 
-            self.browser.close()
+            # self.browser.close()
         except TimeoutException:
             print ("Can't find results! Trying again.")
             return self.searchCompany(name)
@@ -139,11 +148,12 @@ class ScrapeLinkedin():
         #parameters: company url
         #return value: array of urls of related companies
         
-        self.browser = webdriver.Chrome()
-        self.browser.maximize_window()
+        # self.browser = webdriver.Chrome()
+        # self.browser.maximize_window()
 
         print("company: "+ comp)
         print("processing level "+ str(lvl) +" related companies...")
+        self.delay()
         self.results = []
         self.browser.get(companyUrl)
         self.scroll()
@@ -159,14 +169,15 @@ class ScrapeLinkedin():
             self.scroll()
             self.relatedCompanies = self.browser.find_elements_by_css_selector('div.also-viewed.module > ul > li > a')
             for self.url in self.relatedCompanies:
-                self.results.append(self.url.get_attribute('href').replace("?trk=extra_biz_viewers_viewed",""))
+                # self.results.append(self.url.get_attribute('href').replace("?trk=extra_biz_viewers_viewed",""))
+                self.results.append(self.url.get_attribute('href'))
                 print(self.url.get_attribute('href').replace("?trk=extra_biz_viewers_viewed",""))
             print("===========================")
             print("total: " + str(len(self.relatedCompanies)))
             print("===========================")
             self.failCounter = 0
             print("Fail Counter:"+str(self.failCounter))
-            self.browser.close()
+            # self.browser.close()
             return self.results
         except TimeoutException:
             
@@ -174,20 +185,21 @@ class ScrapeLinkedin():
                 print("Information could not be found. This is the time to let go.")
                 print("Fail Counter:"+str(self.failCounter))
                 self.failCounter = 0
-                self.browser.close()
+                # self.browser.close()
                 return self.results
             else:
                 self.failCounter += 1
                 print ("Can't find the information I need! Trying again.")
                 print("Fail Counter:"+str(self.failCounter))
-                self.browser.close()
+                # self.browser.close()
                 return self.getRelatedCompanies(companyUrl,comp,lvl)
 
 
     def getCompanyInfo(self,companyUrl):
-        self.browser = webdriver.Chrome()
-        self.browser.maximize_window()
+        # self.browser = webdriver.Chrome()
+        # self.browser.maximize_window()
         self.browser.get(companyUrl)
+        self.delay()
         try:
             self.element = WebDriverWait(self.browser, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, 'div.header > div.left-entity > div > h1 > span'))
@@ -199,7 +211,7 @@ class ScrapeLinkedin():
             print("("+self.website+")")
             print("Fail Counter:"+str(self.failCounter))
             self.failCounter = 0
-            self.browser.close()
+            # self.browser.close()
             return self.name, self.website
         except TimeoutException:
             if self.failCounter == 5:
@@ -208,7 +220,7 @@ class ScrapeLinkedin():
                 self.failCounter = 0
                 self.name=''
                 self.website=''
-                self.browser.close()
+                # self.browser.close()
                 return self.name, self.website
             else:
                 self.failCounter += 1
@@ -222,7 +234,7 @@ class ScrapeLinkedin():
             print("No website found!")
             print("Fail Counter:"+str(self.failCounter))
             self.failCounter = 0
-            self.browser.close()
+            # self.browser.close()
             return self.name, self.website
 
     def GetColumnsFromCSV(self,column):
