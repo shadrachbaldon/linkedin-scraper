@@ -163,8 +163,10 @@ class ScrapeLinkedin():
         time.sleep(seconds)
 
     def StopForNow(self):
-        print("The bot is paused for 24 hours to avoid being blocked!")
-        time.sleep(86400)
+        print("Paused for 24 hours. I'm trying to act like a human!")
+        for index in range(24,0, -1):
+            print("execution in "+str(index)+" hour(s)")
+            time.sleep(3600)
     
     def searchCompany(self,name):
         #search company function
