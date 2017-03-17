@@ -83,12 +83,6 @@ class Ui(QWidget):
                 print("File Permission Denied! I can't access the file.")
                 self.browser.quit()
 
-
-    # def NicheSearchStart(self):
-    #     button = QPushButton('Start Keyword Search', self)
-    #     button.setGeometry(QRect(200, 230, 160, 50))
-        #button.clicked.connect(self.openFileNameDialog)
-
 class ScrapeLinkedin():
     def __init__(self, path):
         self.csv_path = path
@@ -97,23 +91,25 @@ class ScrapeLinkedin():
         self.browser = webdriver.Chrome()
         self.browser.maximize_window()
         self.failCounter = 0
+        self.requestCounter = 0
 
     def scroll(self):
         self.browser.execute_script("window.scrollTo(0,700);")
         print("scrolled..")
 
     def delay(self):
-        seconds = random.randrange(5,24)
+        seconds = random.randrange(25,60)
         print("delaying execution for " +str(seconds) + " seconds")
         time.sleep(seconds)
+
+    def bigDelay(self):
+        print("delaying execution for 10 minutes")
+        time.sleep(500)
     
     def searchCompany(self,name):
         #search company function
         #parameters: name of the company
         #return value: company url
-
-        # self.browser = webdriver.Chrome()
-        # self.browser.maximize_window()
 
         print("searching for company..")
         self.searchString = "site:linkedin.com/company "+ name
@@ -147,19 +143,26 @@ class ScrapeLinkedin():
         #gets the related companies
         #parameters: company url
         #return value: array of urls of related companies
-        
-        # self.browser = webdriver.Chrome()
-        # self.browser.maximize_window()
 
         print("company: "+ comp)
         print("processing level "+ str(lvl) +" related companies...")
-        self.delay()
+        
         self.results = []
         self.browser.get(companyUrl)
+        self.requestCounter += 1
+        print("Number of page requested: "+str(self.requestCounter))
+
+        if self.requestCounter == 54:
+            self.requestCounter = 0
+            self.bigDelay()
+        else:
+            self.delay()
+
         self.scroll()
         self.scroll()
         self.scroll()
         self.scroll()
+
         try:
             self.element = WebDriverWait(self.browser, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.also-viewed.module > ul > li > a"))
@@ -177,7 +180,6 @@ class ScrapeLinkedin():
             print("===========================")
             self.failCounter = 0
             print("Fail Counter:"+str(self.failCounter))
-            # self.browser.close()
             return self.results
         except TimeoutException:
             
@@ -185,21 +187,26 @@ class ScrapeLinkedin():
                 print("Information could not be found. This is the time to let go.")
                 print("Fail Counter:"+str(self.failCounter))
                 self.failCounter = 0
-                # self.browser.close()
                 return self.results
             else:
                 self.failCounter += 1
                 print ("Can't find the information I need! Trying again.")
                 print("Fail Counter:"+str(self.failCounter))
-                # self.browser.close()
                 return self.getRelatedCompanies(companyUrl,comp,lvl)
 
 
     def getCompanyInfo(self,companyUrl):
-        # self.browser = webdriver.Chrome()
-        # self.browser.maximize_window()
+
+        
         self.browser.get(companyUrl)
-        self.delay()
+        self.requestCounter += 1
+        print("Number of page requested: "+str(self.requestCounter))
+        if self.requestCounter == 54:
+            self.requestCounter = 0
+            self.bigDelay()
+        else:
+            self.delay()
+
         try:
             self.element = WebDriverWait(self.browser, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, 'div.header > div.left-entity > div > h1 > span'))
@@ -211,7 +218,6 @@ class ScrapeLinkedin():
             print("("+self.website+")")
             print("Fail Counter:"+str(self.failCounter))
             self.failCounter = 0
-            # self.browser.close()
             return self.name, self.website
         except TimeoutException:
             if self.failCounter == 5:
@@ -220,7 +226,6 @@ class ScrapeLinkedin():
                 self.failCounter = 0
                 self.name=''
                 self.website=''
-                # self.browser.close()
                 return self.name, self.website
             else:
                 self.failCounter += 1
@@ -234,7 +239,6 @@ class ScrapeLinkedin():
             print("No website found!")
             print("Fail Counter:"+str(self.failCounter))
             self.failCounter = 0
-            # self.browser.close()
             return self.name, self.website
 
     def GetColumnsFromCSV(self,column):
