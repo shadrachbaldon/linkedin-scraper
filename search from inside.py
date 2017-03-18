@@ -229,54 +229,69 @@ class ScrapeLinkedin():
         else:
             print("company: "+ comp)
             print("processing level "+ str(lvl) +" related companies...")
-            self.results = []
-            self.browser.get(companyUrl)
-            self.requestCounter += 1
-            print("Page Request made: "+str(self.requestCounter))
-            self.delay()
-            self.scroll()
-            self.scroll()
-    
-            if lvl > 1:
-                self.info = self.getCompanyInfo()
-                self.comapnyInfoSave = self.saveToFile(self.info[0],self.info[0])
-    
-            try:
-                self.element = WebDriverWait(self.browser, 30).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "li[class=org-similar-companies-module__list-item] span dl.company-info dt a"))
-                )
-                print ("Page is ready!")
+            self.results, self.visitedUrls, self.tempCompany = [],[],[]
+            
+            #checks if url is already visited
+            self.tempCompany.append(companyUrl)
+            self.tempCompany = set(self.tempCompany)
+            self.visitedUrls = set(self.visitedUrls)
+            self.visitCheck = self.tempCompany - self.visitedUrls
+            # =====
+            if len(visitCheck) > 0:
+                #if url is not yet visited
+                self.browser.get(companyUrl)
+                self.visitedUrls = list(self.visitedUrls) # converts from set to list for adding a new item
+                self.visitedUrls.append(companyUrl) # adds new item to visitedUrls
+                self.requestCounter += 1
+                print("Page Request made: "+str(self.requestCounter))
+                self.delay()
                 self.scroll()
                 self.scroll()
-                self.relatedCompanies = self.browser.find_elements_by_css_selector('li[class=org-similar-companies-module__list-item] span dl.company-info dt a')
-                for self.url in self.relatedCompanies:
-                    self.results.append(self.url.get_attribute('href'))
-                print("===========================")
-                print(len(self.relatedCompanies))
-                print("===========================")
-                self.failCounter = 0
-                print("Fail Counter:"+str(self.failCounter))
-                return self.results
-            except TimeoutException:
-                
-                if self.failCounter == 5:
-                    print("Information could not be found. This is the time to let go.")
+        
+                if lvl > 1:
+                    self.info = self.getCompanyInfo()
+                    self.comapnyInfoSave = self.saveToFile(self.info[0],self.info[0])
+    
+                try:
+                    self.element = WebDriverWait(self.browser, 30).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "li[class=org-similar-companies-module__list-item] span dl.company-info dt a"))
+                    )
+                    print ("Page is ready!")
+                    self.scroll()
+                    self.scroll()
+                    self.relatedCompanies = self.browser.find_elements_by_css_selector('li[class=org-similar-companies-module__list-item] span dl.company-info dt a')
+                    for self.url in self.relatedCompanies:
+                        self.results.append(self.url.get_attribute('href'))
+                    print("===========================")
+                    print(len(self.relatedCompanies))
+                    print("===========================")
+                    self.failCounter = 0
+                    print("Fail Counter:"+str(self.failCounter))
+                    return self.results
+
+                except TimeoutException:
+                    if self.failCounter == 5:
+                        print("Information could not be found. This is the time to let go.")
+                        print("Fail Counter:"+str(self.failCounter))
+                        self.failCounter = 0
+                        return self.results
+                    else:
+                        self.failCounter += 1
+                        print ("Can't find the information I need! Trying again.")
+                        print("Fail Counter:"+str(self.failCounter))
+                        return self.getRelatedCompanies(companyUrl,comp,lvl)
+
+                except NoSuchElementException:
+                    self.name = self.browser.find_element_by_css_selector('div.header > div.left-entity > div > h1 > span')
+                    self.name = self.name.text
+                    self.website = ''
+                    print("No website found!")
                     print("Fail Counter:"+str(self.failCounter))
                     self.failCounter = 0
-                    return self.results
-                else:
-                    self.failCounter += 1
-                    print ("Can't find the information I need! Trying again.")
-                    print("Fail Counter:"+str(self.failCounter))
-                    return self.getRelatedCompanies(companyUrl,comp,lvl)
-            except NoSuchElementException:
-                self.name = self.browser.find_element_by_css_selector('div.header > div.left-entity > div > h1 > span')
-                self.name = self.name.text
-                self.website = ''
-                print("No website found!")
-                print("Fail Counter:"+str(self.failCounter))
-                self.failCounter = 0
-                return self.name, self.website
+                    return self.name, self.website
+            else:
+                print("Skipping this.. Url already visited!")
+                return self.results
 
     def GetColumnsFromCSV(self,column):
         self.container = []
@@ -298,9 +313,10 @@ class ScrapeLinkedin():
         self.temp.append(name)
         #convert name to set for comparison on the file
         print(self.temp)
-        name = set(self.temp)        self.masterList = self.GetColumnsFromCSV(5)
+        name = set(self.temp)
+        self.masterList = self.GetColumnsFromCSV(5)
         self.masterList = set(self.masterList)
-        self.toSave = name - self.masterList
+        self.toSave = name - self.masterList # check if the company is already on the file
         if len(self.toSave) > 0:
             try:
                 name = list(name)
