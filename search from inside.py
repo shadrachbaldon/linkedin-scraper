@@ -134,6 +134,7 @@ class ScrapeLinkedin():
         self.failCounter = 0
         self.requestCounter = 0
         self.saveCounter = 0
+        self.visitedUrls = []
 
     def login(self):
         try:
@@ -224,12 +225,13 @@ class ScrapeLinkedin():
         #gets the related companies
         #parameters: company url
         #return value: array of urls of related companies
-        if self.requestCounter == 300:
+        
+        if self.requestCounter == 500:
             self.StopForNow()
         else:
             print("company: "+ comp)
             print("processing level "+ str(lvl) +" related companies...")
-            self.results, self.visitedUrls, self.tempCompany = [],[],[]
+            self.results, self.tempCompany = [],[]
             
             #checks if url is already visited
             self.tempCompany.append(companyUrl)
@@ -237,7 +239,8 @@ class ScrapeLinkedin():
             self.visitedUrls = set(self.visitedUrls)
             self.visitCheck = self.tempCompany - self.visitedUrls
             # =====
-            if len(visitCheck) > 0:
+            if len(self.visitCheck) > 0:
+                print(len(self.visitCheck))
                 #if url is not yet visited
                 self.browser.get(companyUrl)
                 self.visitedUrls = list(self.visitedUrls) # converts from set to list for adding a new item
