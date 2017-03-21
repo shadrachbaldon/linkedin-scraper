@@ -22,7 +22,7 @@ class Ui(QWidget):
         self.left = 100
         self.top = 100
         self.width = 500
-        self.height = 300
+        self.height = 800
         self.initUI()
         
     def initUI(self):
@@ -36,6 +36,8 @@ class Ui(QWidget):
         self.show()
 
     def loginForm(self):
+
+        # ========== account 1 =================
         #label
         self.lblEmail = QLabel("Email:", self)
         self.lblEmail.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -50,11 +52,53 @@ class Ui(QWidget):
         self.lblPassword = QLabel("Password:", self)
         self.lblPassword.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lblPassword.setAlignment(Qt.AlignCenter)
-        self.lblPassword.setGeometry(QRect(20, 70, 60, 50))
+        self.lblPassword.setGeometry(QRect(20, 60, 60, 50))
 
         #open file dialog trigger
         self.txtPassword = QLineEdit(self)
-        self.txtPassword.setGeometry(QRect(90, 80, 250, 30))
+        self.txtPassword.setGeometry(QRect(90, 70, 250, 30))
+
+        # ========== account 2 =================
+        #label
+        self.lblEmail2 = QLabel("Email:", self)
+        self.lblEmail2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblEmail2.setAlignment(Qt.AlignCenter)
+        self.lblEmail2.setGeometry(QRect(40, 130, 40, 50))
+
+        #textbox
+        self.txtEmail2 = QLineEdit(self)
+        self.txtEmail2.setGeometry(QRect(90, 140, 250, 30))
+
+        #label
+        self.lblPassword2 = QLabel("Password:", self)
+        self.lblPassword2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPassword2.setAlignment(Qt.AlignCenter)
+        self.lblPassword2.setGeometry(QRect(20, 170, 60, 50))
+
+        #open file dialog trigger
+        self.txtPassword2 = QLineEdit(self)
+        self.txtPassword2.setGeometry(QRect(90, 180, 250, 30))
+
+        # ========== account 3 =================
+        #label
+        self.lblEmail3 = QLabel("Email:", self)
+        self.lblEmail3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblEmail3.setAlignment(Qt.AlignCenter)
+        self.lblEmail3.setGeometry(QRect(40, 240, 40, 50))
+
+        #textbox
+        self.txtEmail3 = QLineEdit(self)
+        self.txtEmail3.setGeometry(QRect(90, 250, 250, 30))
+
+        #label
+        self.lblPassword3 = QLabel("Password:", self)
+        self.lblPassword3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPassword3.setAlignment(Qt.AlignCenter)
+        self.lblPassword3.setGeometry(QRect(20, 280, 60, 50))
+
+        #open file dialog trigger
+        self.txtPassword3 = QLineEdit(self)
+        self.txtPassword3.setGeometry(QRect(90, 290, 250, 30))
 
     def csv_path(self):
         try:
@@ -84,12 +128,12 @@ class Ui(QWidget):
     def selectCsvButton(self):
         #open file dialog trigger
         button = QPushButton('choose file', self)
-        button.setGeometry(QRect(20, 145, 110, 30)) 
+        button.setGeometry(QRect(20, 380, 110, 30)) 
         button.clicked.connect(self.openFileNameDialog)
         
     def competitorSearchStart(self):
         button = QPushButton('Start Competitor Search', self)
-        button.setGeometry(QRect(20, 230, 160, 50))
+        button.setGeometry(QRect(20, 450, 160, 50))
         email = self.txtEmail.text()
         password = self.txtPassword.text()
         button.clicked.connect(self.startScrapeByCompany)
@@ -104,7 +148,7 @@ class Ui(QWidget):
             try:
                 self.csv_path = path
                 self.csv_path = self.csv_path.replace('/','\\\\')
-                self.file = open(self.csv_path,'a', newline='')
+                self.file = open(self.csv_path,'a', newline='', encoding='utf-8')
                 self.writer = csv.writer(self.file, delimiter=',')
                 self.writer.writerow((''))
                 self.file.close()
@@ -117,7 +161,7 @@ class Ui(QWidget):
 
     def NicheSearchStart(self):
         button = QPushButton('Start Keyword Search', self)
-        button.setGeometry(QRect(200, 230, 160, 50))
+        button.setGeometry(QRect(200, 450, 160, 50))
         #button.clicked.connect(self.openFileNameDialog)
 
 class ScrapeLinkedin():
@@ -135,6 +179,9 @@ class ScrapeLinkedin():
         self.requestCounter = 0
         self.saveCounter = 0
         self.visitedUrls = []
+
+    def switchAccount(self):
+        self.browser.get(('https://www.linkedin.com/logout'))
 
     def login(self):
         try:
@@ -197,6 +244,8 @@ class ScrapeLinkedin():
             self.website = self.website.get_attribute('href')
             print("("+self.website+")")
             print("Fail Counter:"+str(self.failCounter))
+            self.log = "[Request #" + str(self.requestCounter) + "] Got the data. Total Saved Data:"+str(self.saveCounter)
+                self.saveLog(self.log)
             self.failCounter = 0
             return self.name, self.website
         except TimeoutException:
@@ -237,11 +286,11 @@ class ScrapeLinkedin():
             self.tempCompany.append(companyUrl)
             self.tempCompany = set(self.tempCompany)
             self.visitedUrls = set(self.visitedUrls)
-            self.visitCheck = self.tempCompany - self.visitedUrls
+            self.visitCheck = self.tempCompany - self.visitedUrls #check if url is already on the visitedUrls list
             # =====
             if len(self.visitCheck) > 0:
-                print(len(self.visitCheck))
                 #if url is not yet visited
+                print(len(self.visitCheck))
                 self.browser.get(companyUrl)
                 self.visitedUrls = list(self.visitedUrls) # converts from set to list for adding a new item
                 self.visitedUrls.append(companyUrl) # adds new item to visitedUrls
@@ -250,12 +299,14 @@ class ScrapeLinkedin():
                 self.delay()
                 self.scroll()
                 self.scroll()
-        
+                
                 if lvl > 1:
-                    self.info = self.getCompanyInfo()
-                    self.comapnyInfoSave = self.saveToFile(self.info[0],self.info[0])
+                    self.info = self.getCompanyInfo() #get info
+                    self.comapnyInfoSave = self.saveToFile(self.info[0],self.info[0]) #save info
     
+                # gets the 6 related companies and return it
                 try:
+
                     self.element = WebDriverWait(self.browser, 30).until(
                         EC.presence_of_element_located((By.CSS_SELECTOR, "li[class=org-similar-companies-module__list-item] span dl.company-info dt a"))
                     )
@@ -292,13 +343,16 @@ class ScrapeLinkedin():
                     print("Fail Counter:"+str(self.failCounter))
                     self.failCounter = 0
                     return self.name, self.website
+                #end get 6 related companies
             else:
                 print("Skipping this.. Url already visited!")
+                self.log = "[Request #" + str(self.requestCounter) + "] Skipped: " + self.name + " Already on the file. Total Saved Data:"+str(self.saveCounter)
+                self.saveLog(self.log)
                 return self.results
 
     def GetColumnsFromCSV(self,column):
         self.container = []
-        self.file = open(self.csv_path,'r')
+        self.file = open(self.csv_path,'r', encoding='utf-8')
         self.reader = csv.reader(self.file)
         self.reader = list(filter(None, self.reader))
         self.rowCounter = 0
@@ -334,15 +388,19 @@ class ScrapeLinkedin():
                     self.writer.writerow(('','','','','',self.name,'',self.clean,''))
                 self.file.close()
                 self.saveCounter += 1
+                self.log = "[Request #" + str(self.requestCounter) + "] Saved: " + self.name + "! Total Saved Data:"+str(self.saveCounter)
+                self.saveLog(self.log)
                 print("Saved Info total: "+str(self.saveCounter))
 
             except PermissionError:
                 print("File Permission Denied! I can't access the file.")
         else:
             print("No need to save this is already on the file")
+            self.log = "[Request #" + str(self.requestCounter) + "] Skipped: " + self.name + " Already on the file. Total Saved Data:"+str(self.saveCounter)
+            self.saveLog(self.log)
 
     def saveLog(self,msg):
-        self.file = open('log.txt','a')
+        self.file = open('log.txt','a', encoding='utf-8')
         self.file.write(msg)
         self.file.write('\n')
         self.file.close()
@@ -360,8 +418,6 @@ class ScrapeLinkedin():
 
             print("COMPANY PROCESSING: " + self.company)
             print("=========================================")
-            print("==============STARTING LVL 1=============")
-            print("=========================================")
             
             for self.lvl1_item in self.lvl1Search:
                 self.lvl2Search = self.lvl2Search + self.getRelatedCompanies(self.lvl1_item,self.company,2)
@@ -370,8 +426,6 @@ class ScrapeLinkedin():
             self.log = self.company+" Level 2 total:"+str(len(self.lvl2Search))
             self.saveLog(self.log)
             print("=========================================")
-            print("==============LVL 1 ENDS HERE============")
-            print("==============STARTING LVL 2=============")
 
             
             for self.lvl2_item in self.lvl2Search:
@@ -382,8 +436,6 @@ class ScrapeLinkedin():
             self.saveLog(self.log)
 
             print("=========================================")
-            print("==============LVL 2 ENDS HERE============")
-            print("==============STARTING LVL 3=============")
 
             
             for self.lvl3_item in self.lvl3Search:
@@ -394,8 +446,6 @@ class ScrapeLinkedin():
             self.saveLog(self.log)
         
             print("=========================================")
-            print("==============LVL 3 ENDS HERE============")
-            print("==============STARTING LVL 4=============")
 
             
             
@@ -407,13 +457,10 @@ class ScrapeLinkedin():
             self.saveLog(self.log)
         
             print("=========================================")
-            print("==============LVL 4 ENDS HERE============")
             
 
             if len(self.lvl5Search) < 500:
                 print("=========================================")
-                print("===========LVL 5 is less than 500========")
-                print("==============STARTING LVL 6=============")
                 for self.lvl5_item in self.lvl5Search:
                     self.lvl6Search = self.lvl6Search + self.getRelatedCompanies(self.lvl5_item,self.company,6)
                 self.lvl6Search = set(self.lvl6Search)#removes duplicate links
@@ -421,14 +468,6 @@ class ScrapeLinkedin():
                 self.log = self.company+" Level 5 total:"+str(len(self.lvl6Search))
                 self.saveLog(self.log)
                 print("=========================================")
-                print("==============LVL 6 ENDS HERE============")
-
-            print("LEVEL 1 Search: " + str(len(self.lvl1Search)))
-            print("LEVEL 2 Search: " + str(len(self.lvl2Search)))
-            print("LEVEL 3 Search: " + str(len(self.lvl3Search)))
-            print("LEVEL 4 Search: " + str(len(self.lvl4Search)))
-            print("LEVEL 5 Search: " + str(len(self.lvl5Search)))
-            print("LEVEL 6 Search: " + str(len(self.lvl6Search)))
 
         
 if __name__ == '__main__':
