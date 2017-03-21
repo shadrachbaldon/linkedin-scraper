@@ -139,13 +139,28 @@ class Ui(QWidget):
         button.clicked.connect(self.startScrapeByCompany)
 
     def startScrapeByCompany(self):
-        email = self.txtEmail.text().strip()
-        password = self.txtPassword.text().strip()
+        email1 = self.txtEmail.text().strip()
+        password1 = self.txtPassword.text().strip()
+
+        email2 = self.txtEmail2.text().strip()
+        password2 = self.txtPassword2.text().strip()
+
+        email3 = self.txtEmail3.text().strip()
+        password3 = self.txtPassword3.text().strip()
+
         path = self.csv_path()
-        if email == '' or password == '' or path == False:
+
+        if email1 == '' or password1 == '' or email2 == '' or password2 == '' or email3 == '' or password3 == '' or path == False:
             print("some fields are empty. please fill it out")
         else:
             try:
+                self.emails, self.passwords = [],[]
+                self.emails.append(email1)
+                self.emails.append(email2)
+                self.emails.append(email3)
+                self.passwords.append(password1)
+                self.passwords.append(password2)
+                self.passwords.append(password3)
                 self.csv_path = path
                 self.csv_path = self.csv_path.replace('/','\\\\')
                 self.file = open(self.csv_path,'a', newline='', encoding='utf-8')
@@ -153,7 +168,7 @@ class Ui(QWidget):
                 self.writer.writerow((''))
                 self.file.close()
                 self.setWindowTitle("Linkedin Scraper is working...")
-                ScrapeLinkedin(email,password,self.csv_path).ScrapeByCompany()
+                ScrapeLinkedin(self.emails,self.passwords,self.csv_path).ScrapeByCompany()
             except PermissionError:
                 print("File Permission Denied! I can't access the file.")
                 self.browser.quit()
@@ -165,16 +180,19 @@ class Ui(QWidget):
         #button.clicked.connect(self.openFileNameDialog)
 
 class ScrapeLinkedin():
-    def __init__(self, email, password,path):
-        self.usernameStr = email
-        self.passwordStr = password
+    def __init__(self, emails, passwords,path):
+        self.accountQueue = 0
+        self.emails = emails
+        self.passwords = passwords
         self.csv_path = path
         self.csv_path = self.csv_path.replace('/','\\\\')
         print(self.csv_path)
         self.browser = webdriver.Chrome()
         self.browser.get(('https://linkedin.com'))
         self.browser.maximize_window()
+        self.delay()
         self.login()
+        self.delay()
         self.failCounter = 0
         self.requestCounter = 0
         self.saveCounter = 0
@@ -182,6 +200,17 @@ class ScrapeLinkedin():
 
     def switchAccount(self):
         self.browser.get(('https://www.linkedin.com/logout'))
+        #reset variables
+        self.failCounter = 0
+        self.requestCounter = 0
+        self.saveCounter = 0
+        self.visitedUrls = []
+
+        if self.accountQueue == 2:
+            self.accountQueue = 0
+        else:
+            self.accountQueue += 1
+        self.login()
 
     def login(self):
         try:
@@ -190,10 +219,10 @@ class ScrapeLinkedin():
             )
             # fill in username
             self.username = self.browser.find_element_by_id('login-email')
-            self.username.send_keys(self.usernameStr)
+            self.username.send_keys(self.emails[self.accountQueue])
             #fill the password
             self.password = self.browser.find_element_by_id('login-password')
-            self.password.send_keys(self.passwordStr)
+            self.password.send_keys(self.passwords[self.accountQueue])
             #click the sign in button
             self.loginbtn = self.browser.find_element_by_id('login-submit')
             self.loginbtn.click()
@@ -245,7 +274,7 @@ class ScrapeLinkedin():
             print("("+self.website+")")
             print("Fail Counter:"+str(self.failCounter))
             self.log = "[Request #" + str(self.requestCounter) + "] Got the data. Total Saved Data:"+str(self.saveCounter)
-                self.saveLog(self.log)
+            self.saveLog(self.log)
             self.failCounter = 0
             return self.name, self.website
         except TimeoutException:
@@ -303,6 +332,10 @@ class ScrapeLinkedin():
                 if lvl > 1:
                     self.info = self.getCompanyInfo() #get info
                     self.comapnyInfoSave = self.saveToFile(self.info[0],self.info[0]) #save info
+                else:
+                    self.log = "company search page. request not counted"
+                    self.saveLog(self.log)
+                    self.requestCounter -= 1
     
                 # gets the 6 related companies and return it
                 try:
