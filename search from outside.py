@@ -102,9 +102,11 @@ class ScrapeLinkedin():
         print("delaying execution for " +str(seconds) + " seconds")
         time.sleep(seconds)
 
-    def bigDelay(self):
-        print("delaying execution for 10 minutes")
-        time.sleep(500)
+    def saveLog(self,msg):
+        self.file = open('searchFromOutsideLog.txt','a', encoding='utf-8')
+        self.file.write(msg)
+        self.file.write('\n')
+        self.file.close()
     
     def searchCompany(self,name):
         #search company function
@@ -257,9 +259,6 @@ class ScrapeLinkedin():
 
     def ScrapeByCompany(self):
 
-
-        self.GlobalFinalCompetitors = []        
-
         self.companies = self.GetColumnsFromCSV(5)
         for self.company in self.companies:
 
@@ -322,36 +321,6 @@ class ScrapeLinkedin():
             print("LEVEL 4 Search: " + str(len(self.lvl4Search)))
             print("LEVEL 5 Search: " + str(len(self.lvl5Search)))
             print("LEVEL 6 Search: " + str(len(self.lvl6Search)))
-            
-            #removes the duplicate companies
-            self.finalCompetitors = set(self.lvl1Search + self.lvl2Search + self.lvl3Search + self.lvl4Search + self.lvl5Search + self.lvl6Search)
-            self.finalCompetitors = list(self.finalCompetitors)
-            self.GlobalFinalCompetitors = set(self.finalCompetitors + self.GlobalFinalCompetitors)#removes the duplicates to save memory space
-            self.GlobalFinalCompetitors = list(self.GlobalFinalCompetitors)
-            # self.GlobalFinalCompetitors = self.GlobalFinalCompetitors + self.lvl1Search
-        
-        self.GlobalFinalCompetitors = set(self.GlobalFinalCompetitors)
-        
-        print("Saving "+ str(len(self.GlobalFinalCompetitors)) +" results about to happen!")
-        try:
-            self.file = open(self.csv_path,'a', newline='', encoding='utf-8')
-            print("OOOOOOOOOOOOOOO")
-            self.writer = csv.writer(self.file, delimiter=',')
-            for self.GlobalFinalCompetitor in self.GlobalFinalCompetitors:
-                self.info = self.getCompanyInfo(self.GlobalFinalCompetitor)
-                if (self.info[0] == '') and (self.info[1] == ''):
-                    pass
-                else:
-                    self.clean = self.info[1].rstrip()
-                    print(self.clean)
-                    self.writer.writerow(('','','','','',self.info[0],'',self.clean,''))
-                    print("saved!")
-            self.file.close()
-            self.browser.quit()
-            print("All done!")
-        except PermissionError:
-            print("File Permission Denied! I can't access the file.")
-            self.browser.quit()
         
 if __name__ == '__main__':
     app = QApplication(sys.argv)

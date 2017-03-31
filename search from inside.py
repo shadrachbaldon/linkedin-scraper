@@ -32,7 +32,6 @@ class Ui(QWidget):
         self.loginForm()
         self.selectCsvButton()
         self.competitorSearchStart()
-        self.NicheSearchStart()
         self.show()
 
     def loginForm(self):
@@ -54,7 +53,7 @@ class Ui(QWidget):
         self.lblPassword.setAlignment(Qt.AlignCenter)
         self.lblPassword.setGeometry(QRect(20, 60, 60, 50))
 
-        #open file dialog trigger
+        #textbox
         self.txtPassword = QLineEdit(self)
         self.txtPassword.setGeometry(QRect(90, 70, 250, 30))
 
@@ -75,7 +74,7 @@ class Ui(QWidget):
         self.lblPassword2.setAlignment(Qt.AlignCenter)
         self.lblPassword2.setGeometry(QRect(20, 170, 60, 50))
 
-        #open file dialog trigger
+        #textbox
         self.txtPassword2 = QLineEdit(self)
         self.txtPassword2.setGeometry(QRect(90, 180, 250, 30))
 
@@ -96,9 +95,30 @@ class Ui(QWidget):
         self.lblPassword3.setAlignment(Qt.AlignCenter)
         self.lblPassword3.setGeometry(QRect(20, 280, 60, 50))
 
-        #open file dialog trigger
+        #textbox
         self.txtPassword3 = QLineEdit(self)
         self.txtPassword3.setGeometry(QRect(90, 290, 250, 30))
+
+        # ========== account 4 =================
+        #label
+        '''self.lblEmail4 = QLabel("Email:", self)
+        self.lblEmail4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblEmail4.setAlignment(Qt.AlignCenter)
+        self.lblEmail4.setGeometry(QRect(40, 350, 40, 50))
+
+        #textbox
+        self.txtEmail4 = QLineEdit(self)
+        self.txtEmail4.setGeometry(QRect(90, 360, 250, 30))
+
+        #label
+        self.lblPassword4 = QLabel("Password:", self)
+        self.lblPassword4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lblPassword4.setAlignment(Qt.AlignCenter)
+        self.lblPassword4.setGeometry(QRect(20, 390, 60, 50))
+
+        #textbox
+        self.txtPassword4 = QLineEdit(self)
+        self.txtPassword4.setGeometry(QRect(90, 400, 250, 30))'''
 
     def csv_path(self):
         try:
@@ -107,13 +127,6 @@ class Ui(QWidget):
             return False
         else:
             return path_csv
-        
-    def displayPath(self):
-        
-        self.lblPath = QLabel("path_csv", self)
-        self.lblPath.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lblPath.setGeometry(QRect(130, 135, 110, 50))
-        print("display path called")
         
     def openFileNameDialog(self):
         #open file dialog
@@ -128,12 +141,12 @@ class Ui(QWidget):
     def selectCsvButton(self):
         #open file dialog trigger
         button = QPushButton('choose file', self)
-        button.setGeometry(QRect(20, 380, 110, 30)) 
+        button.setGeometry(QRect(20, 480, 110, 30)) 
         button.clicked.connect(self.openFileNameDialog)
         
     def competitorSearchStart(self):
         button = QPushButton('Start Competitor Search', self)
-        button.setGeometry(QRect(20, 450, 160, 50))
+        button.setGeometry(QRect(180, 550, 160, 50))
         email = self.txtEmail.text()
         password = self.txtPassword.text()
         button.clicked.connect(self.startScrapeByCompany)
@@ -148,9 +161,12 @@ class Ui(QWidget):
         email3 = self.txtEmail3.text().strip()
         password3 = self.txtPassword3.text().strip()
 
+        #email4 = self.txtEmail4.text().strip()
+        #password4 = self.txtPassword4.text().strip()
+
         path = self.csv_path()
 
-        if email1 == '' or password1 == '' or email2 == '' or password2 == '' or email3 == '' or password3 == '' or path == False:
+        if email1 == '' or password1 == '' or email2 == '' or password2 == '' or email3 == '' or password3 == '' or path == False: # or email4 == '' or password4 == ''
             print("some fields are empty. please fill it out")
         else:
             try:
@@ -158,9 +174,11 @@ class Ui(QWidget):
                 self.emails.append(email1)
                 self.emails.append(email2)
                 self.emails.append(email3)
+                #self.emails.append(email4)
                 self.passwords.append(password1)
                 self.passwords.append(password2)
                 self.passwords.append(password3)
+                #self.passwords.append(password4)
                 self.csv_path = path
                 self.csv_path = self.csv_path.replace('/','\\\\')
                 self.file = open(self.csv_path,'a', newline='', encoding='utf-8')
@@ -174,11 +192,6 @@ class Ui(QWidget):
                 self.browser.quit()
 
 
-    def NicheSearchStart(self):
-        button = QPushButton('Start Keyword Search', self)
-        button.setGeometry(QRect(200, 450, 160, 50))
-        #button.clicked.connect(self.openFileNameDialog)
-
 class ScrapeLinkedin():
     def __init__(self, emails, passwords,path):
         self.accountQueue = 0
@@ -188,31 +201,36 @@ class ScrapeLinkedin():
         self.csv_path = self.csv_path.replace('/','\\\\')
         print(self.csv_path)
         self.browser = webdriver.Chrome()
-        self.browser.get(('https://linkedin.com'))
         self.browser.maximize_window()
-        self.delay()
         self.login()
-        self.delay()
         self.failCounter = 0
         self.requestCounter = 0
         self.saveCounter = 0
         self.visitedUrls = []
 
     def switchAccount(self):
+        print("switching account..")
+        self.log = "Switching account... Account #: " + str(self.accountQueue) + "======================="
+        self.saveLog(self.log)
         self.browser.get(('https://www.linkedin.com/logout'))
         #reset variables
         self.failCounter = 0
         self.requestCounter = 0
         self.saveCounter = 0
-        self.visitedUrls = []
 
         if self.accountQueue == 2:
             self.accountQueue = 0
         else:
             self.accountQueue += 1
+        self.log = "delaying for 3 hours to lessen the chance of being restricted"
+        self.saveLog(self.log)
+        self.log = "next account to use after 3 hours: " + self.emails[self.accountQueue]
+        self.saveLog(self.log)
+        self.StopForNow()
         self.login()
 
     def login(self):
+        self.browser.get(('https://linkedin.com'))
         try:
             self.element = WebDriverWait(self.browser, 30).until(
                 EC.presence_of_element_located((By.ID, 'login-email'))
@@ -226,6 +244,41 @@ class ScrapeLinkedin():
             #click the sign in button
             self.loginbtn = self.browser.find_element_by_id('login-submit')
             self.loginbtn.click()
+
+            self.delay()
+            try:
+                self.element = WebDriverWait(self.browser, 30).until(
+                    EC.presence_of_element_located((By.ID, 'session_key-login'))
+                )
+                self.log = "Unsuccessful login!"
+                self.saveLog(self.log)
+                print("login failed! Fail Count: " + str(self.failCounter))
+                
+                if self.failCounter == 3:
+                    self.failCounter = 0
+                    self.log = "Can't login! "+self.emails[self.accountQueue]+" might be blocked!"
+                    self.saveLog(self.log)
+                    if self.accountQueue == 2:
+                        self.log = "Exiting no accounts left to process!"
+                        self.saveLog(self.log)
+                        print("Exiting no accounts left to process!")
+                        self.browser.quit()
+                    else:
+                        self.accountQueue += 1
+                        self.log = "Moving to next account "+self.emails[self.accountQueue]+" might be blocked!"
+                        self.saveLog(self.log)
+                        print("Can't login, account might be blocked " + str(self.failCounter))
+                        print("Moving to next account: "+self.emails[self.accountQueue])
+                        return self.login()
+                else:
+                    self.failCounter += 1
+                    return self.login()
+            except TimeoutException:
+                self.log = "Login Success"
+                self.saveLog(self.log)
+                print ("Login Success!")
+                self.failCounter = 0
+                
         except TimeoutException:
             print ("Can't find the login form! Trying again.")
             return self.login()
@@ -235,13 +288,14 @@ class ScrapeLinkedin():
         print("scrolled..")
 
     def delay(self):
-        seconds = random.randrange(15,45)
+        seconds = random.randrange(15,50)
         print("delaying execution for " +str(seconds) + " seconds")
         time.sleep(seconds)
 
     def StopForNow(self):
-        print("Paused for 24 hours. I'm trying to act like a human!")
-        for index in range(24,0, -1):
+        print("Paused for 3 hours. I'm trying to act like a human!")
+        print("next account to use after 3 hours: " + self.emails[self.accountQueue])
+        for index in range(4,0, -1):
             print("execution in "+str(index)+" hour(s)")
             time.sleep(3600)
     
@@ -305,7 +359,8 @@ class ScrapeLinkedin():
         #return value: array of urls of related companies
         
         if self.requestCounter == 500:
-            self.StopForNow()
+            self.switchAccount()
+            return self.getRelatedCompanies(companyUrl,comp,lvl)
         else:
             print("company: "+ comp)
             print("processing level "+ str(lvl) +" related companies...")
